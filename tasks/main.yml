@@ -1,0 +1,43 @@
+---
+- name: Install chrony
+  package: name=chrony state=installed
+  register: install_packages
+  until: install_packages is success
+  retries: 5
+  delay: 3
+
+- name: Backup chrony config
+  shell:
+    cmd: "if [ ! -e /etc/chrony.conf.backup ]; then /bin/cp /etc/chrony.conf /etc/chrony.conf.backup; fi"
+    executable: /bin/bash
+    creates: /etc/chrony.conf.backup
+
+- name: Setup firewall chrony for security
+  import_role:
+    name: gsdc.firewalld
+  vars:
+    firewalld_direct_enabled_rules: >-
+      {{ ["ipv4", "ipv6"] | product([
+        "filter INPUT 1 -p udp --dport 123 -m recent --set --name ntpquery -m comment --comment 'Set counter for the NTP query frequency'",
+        "filter INPUT 2 -p udp --dport 123 -m recent --name ntpquery --rcheck --seconds 60 --hitcount 3 -j DROP -m comment --comment 'Check the NTP query frequency'",
+        "filter OUTPUT 1 -p udp --sport 123 -m length --length 600: -j DROP -m comment --comment 'Prevent NTP-DoS'"
+      ]) | map('join', ' ') }}
+  when: use_chrony_security_firewall_rule|bool
+
+- name: Create chrony config file
+  template:
+    src: chrony.conf.j2
+    dest: /etc/chrony.conf
+    owner: root
+    group: root
+    mode: u=rw,g=r,o=r
+  notify:
+    - restart chronyd
+
+- name: Enable chrony service
+  service:
+    name: chronyd
+    state: started
+    enabled: true
+
+- meta: flush_handlers

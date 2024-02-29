@@ -1,0 +1,9 @@
+---
+ntp_servers: ["0.centos.pool.ntp.org iburst", "1.centos.pool.ntp.org iburst", "2.centos.pool.ntp.org iburst", "3.centos.pool.ntp.org iburst"]
+ntp_initstep_servers: ["0.centos.pool.ntp.org", "1.centos.pool.ntp.org", "2.centos.pool.ntp.org", "3.centos.pool.ntp.org"]
+ntp_client_cidrs:
+  - 192.168.0.0/16
+  - 172.16.0.0/12
+  - 10.0.0.0/8
+use_chrony_server_mode: true
+use_chrony_security_firewall_rule: true

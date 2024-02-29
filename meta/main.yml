@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  role_name: chrony
+  author: gsdc
+  description: Common management of FirewallD.
+  company: Korea Institute of Science and Technology Information (KISTI)
+  license: BSD
+  min_ansible_version: "2.7"
+  platforms:
+    - name: EL
+      versions:
+        - "7"
+        - "8"
+        - "9"
+  galaxy_tags: ["chrony"]
+dependencies: []

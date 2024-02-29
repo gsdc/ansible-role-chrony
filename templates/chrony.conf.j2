@@ -1,0 +1,65 @@
+# Use public servers from the pool.ntp.org project.
+# Please consider joining the pool (http://www.pool.ntp.org/join.html).
+{% for server in ntp_servers -%}
+server {{ server }}
+{% endfor %}
+
+# Trim the system clock on boot-up
+{% if ntp_initstep_servers|length > 0 -%}
+initstepslew {% if use_chrony_server_mode|bool -%} 10 {%- else -%} 20 {%- endif -%}
+{% for server in ntp_initstep_servers %} {{ server }} {%- endfor -%}
+{% endif %}
+{{ "\n" }}
+# Ignore stratum in source selection.
+{% if not use_chrony_server_mode|bool -%} # {%- endif -%} stratumweight 0
+
+# Record the rate at which the system clock gains/losses time.
+driftfile /var/lib/chrony/drift
+
+# Allow the system clock to be stepped in the first three updates
+# if its offset is larger than 1 second.
+makestep 1.0 3
+
+# Enable kernel synchronization of the real-time clock (RTC).
+rtcsync
+
+# Enable hardware timestamping on all interfaces that support it.
+#hwtimestamp *
+
+# Increase the minimum number of selectable sources required to adjust
+# the system clock.
+#minsources 2
+
+# Allow NTP client access from local network.
+#allow 192.168.0.0/16
+{% if use_chrony_server_mode|bool -%}
+allow 127.0.0.1
+{% for ntp_client_cidr in ntp_client_cidrs -%}
+allow {{ ntp_client_cidr }}
+{% endfor %}
+{% endif %}
+
+# Serve time even if not synchronized to a time source.
+local stratum {% if use_chrony_server_mode|bool -%} 8 orphan {%- else -%} 10 {%- endif %}
+{{ "\n" }}
+# Specify file containing keys for NTP authentication.
+keyfile /etc/chrony.keys
+
+# Listen for commands only on localhost.
+bindcmdaddress 127.0.0.1
+bindcmdaddress ::1
+
+# Get TAI-UTC offset and leap seconds from the system tz database.
+leapsectz right/UTC
+
+# Specify directory for log files.
+logdir /var/log/chrony
+
+# Disable logging of client accesses.
+noclientlog
+
+# Send a message to syslog if a clock adjustment is larger than 0.5 seconds.
+logchange 0.5
+
+# Select which information is logged.
+#log measurements statistics tracking
