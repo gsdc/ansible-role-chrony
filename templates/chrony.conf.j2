@@ -13,6 +13,9 @@ initstepslew {% if use_chrony_server_mode|bool -%} 10 {%- else -%} 20 {%- endif 
 # Ignore stratum in source selection.
 {% if not use_chrony_server_mode|bool -%} # {%- endif -%} stratumweight 0
 
+# Use NTP servers from DHCP.
+sourcedir /run/chrony-dhcp
+
 # Record the rate at which the system clock gains/losses time.
 driftfile /var/lib/chrony/drift
 
@@ -31,7 +34,6 @@ rtcsync
 #minsources 2
 
 # Allow NTP client access from local network.
-#allow 192.168.0.0/16
 {% if use_chrony_server_mode|bool -%}
 allow 127.0.0.1
 {% for ntp_client_cidr in ntp_client_cidrs -%}
@@ -42,12 +44,21 @@ allow {{ ntp_client_cidr }}
 # Serve time even if not synchronized to a time source.
 local stratum {% if use_chrony_server_mode|bool -%} 8 orphan {%- else -%} 10 {%- endif %}
 {{ "\n" }}
+# Require authentication (nts or key option) for all NTP sources.
+#authselectmode require
+
 # Specify file containing keys for NTP authentication.
 keyfile /etc/chrony.keys
 
 # Listen for commands only on localhost.
 bindcmdaddress 127.0.0.1
 bindcmdaddress ::1
+
+# Save NTS keys and cookies.
+ntsdumpdir /var/lib/chrony
+
+# Insert/delete leap seconds by slewing instead of stepping.
+#leapsecmode slew
 
 # Get TAI-UTC offset and leap seconds from the system tz database.
 leapsectz right/UTC
