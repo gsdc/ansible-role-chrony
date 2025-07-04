@@ -19,7 +19,7 @@
     firewalld_direct_enabled_rules: >-
       {{ ["ipv4", "ipv6"] | product([
         "filter INPUT 1 -p udp --dport 123 -m recent --set --name ntpquery -m comment --comment 'Set counter for the NTP query frequency'",
-        "filter INPUT 2 -p udp --dport 123 -m recent --name ntpquery --rcheck --seconds 60 --hitcount 3 -j DROP -m comment --comment 'Check the NTP query frequency'",
+        "filter INPUT 2 -p udp --dport 123 -m recent --name ntpquery --rcheck --seconds 60 --hitcount 30 -j DROP -m comment --comment 'Check the NTP query frequency'",
         "filter OUTPUT 1 -p udp --sport 123 -m length --length 600: -j DROP -m comment --comment 'Prevent NTP-DoS'"
       ]) | map('join', ' ') }}
   when: use_chrony_security_firewall_rule|bool
